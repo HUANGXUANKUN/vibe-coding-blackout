@@ -15,6 +15,17 @@ public enum SelfTest {
         app.setActivationPolicy(.accessory)
         app.finishLaunching()
 
+        // Two instances driving the same backlight produce a confusing failure
+        // rather than a useful one, so refuse instead of racing.
+        let others = NSRunningApplication
+            .runningApplications(withBundleIdentifier: "com.huangxuankun.blackout")
+            .filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+        if !others.isEmpty {
+            print("Blackout is already running (pid \(others.map { String($0.processIdentifier) }.joined(separator: ", "))).")
+            print("Quit it first — two instances fight over the same display brightness.")
+            return 2
+        }
+
         let prefs = Preferences.shared
         let controller = BlackoutController(prefs: prefs)
         var failures: [String] = []

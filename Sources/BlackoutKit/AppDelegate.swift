@@ -30,6 +30,11 @@ public final class BlackoutAppDelegate: NSObject, NSApplicationDelegate {
         statusItem.onQuit = { NSApp.terminate(nil) }
 
         controller.onStateChange = { [weak self] in self?.statusItem.refresh() }
+        controller.isHotkeyAvailable = { [weak self] in
+            guard let self else { return false }
+            // Secure input counts as unavailable: macOS has already killed the tap.
+            return self.monitor.isInstalled && !self.monitor.isSecureInputActive
+        }
         controller.prewarm()
 
         // Hop off the event-tap callback before doing window work: a slow

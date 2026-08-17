@@ -17,9 +17,15 @@ public final class BlackoutController {
     /// Called after every state change, on the main thread.
     public var onStateChange: (() -> Void)?
 
+    /// Whether the double-tap gesture can actually fire right now. Defaults to
+    /// "no", which is the safe assumption: it makes the overlay dismissable
+    /// without any permission.
+    public var isHotkeyAvailable: () -> Bool = { false }
+
     public init(prefs: Preferences = .shared) {
         self.prefs = prefs
         self.brightness = BrightnessController(prefs: prefs)
+        overlays.onDismissRequest = { [weak self] in self?.deactivate() }
         registerSystemObservers()
     }
 
@@ -44,8 +50,18 @@ public final class BlackoutController {
         guard !isActive else { return }
         isActive = true
 
-        let hint = prefs.showHint ? hintText() : nil
-        overlays.activate(animated: prefs.fadeEnabled, hint: hint)
+        let hotkey = isHotkeyAvailable()
+        // Without the event tap there is no gesture and no esc, and the overlay
+        // covers our own menu bar — so the only remaining exits have to come from
+        // the overlay itself, or the user is trapped (PRD round 4).
+        let keyboardDismissable = !hotkey || prefs.blockInput
+        let clickDismissable = !hotkey
+
+        let hint = prefs.showHint ? hintText(hotkeyAvailable: hotkey) : nil
+        overlays.activate(animated: prefs.fadeEnabled,
+                          hint: hint,
+                          keyboardDismissable: keyboardDismissable,
+                          clickDismissable: clickDismissable)
 
         if prefs.dimBacklight { brightness.dim() }
         if prefs.keepAwake { power.acquire() }
@@ -106,7 +122,12 @@ public final class BlackoutController {
         power.release()
     }
 
-    private func hintText() -> String {
+    private func hintText(hotkeyAvailable: Bool) -> String {
+        guard hotkeyAvailable else {
+            // Never name the gesture when it cannot work — that is how someone
+            // ends up tapping at a black screen that will not come back.
+            return "Screens blacked out · press esc or click to restore"
+        }
         let symbol = prefs.triggerKey.symbol
         if prefs.escapeRestores {
             return "Screens blacked out · double-tap \(symbol) or press esc to restore"

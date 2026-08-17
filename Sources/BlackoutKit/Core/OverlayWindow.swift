@@ -105,8 +105,33 @@ final class OverlayWindow: NSPanel {
         setFrame(screen.frame, display: false)
     }
 
-    override var canBecomeKey: Bool { false }
+    /// When true the panel takes key focus so it can receive `esc` through plain
+    /// AppKit, with no event tap and therefore no permission involved. This is
+    /// the escape hatch that does not depend on Accessibility being granted or on
+    /// macOS not having disabled event taps for secure input.
+    ///
+    /// `.nonactivatingPanel` means becoming key does *not* activate the app, so
+    /// the frontmost application still stays frontmost.
+    var acceptsKeys = false
+    /// Additionally dismiss on a click. Only enabled when the hotkey is
+    /// unavailable, where an extra way out is worth more than the risk of a
+    /// stray click undoing the blackout.
+    var dismissOnClick = false
+    /// Invoked when the user asks to restore from within the overlay itself.
+    var onDismissRequest: (() -> Void)?
+
+    override var canBecomeKey: Bool { acceptsKeys }
     override var canBecomeMain: Bool { false }
+
+    override func keyDown(with event: NSEvent) {
+        // 53 == kVK_Escape. Everything else is swallowed: the screens are hidden,
+        // keystrokes have nowhere useful to go.
+        if event.keyCode == 53 { onDismissRequest?() }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if dismissOnClick { onDismissRequest?() }
+    }
 
     func match(_ screen: NSScreen) {
         if frame != screen.frame {

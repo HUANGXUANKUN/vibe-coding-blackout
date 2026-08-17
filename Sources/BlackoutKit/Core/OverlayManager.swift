@@ -87,7 +87,20 @@ public final class OverlayManager {
 
     // MARK: - Activation
 
-    public func activate(animated: Bool, hint: String?) {
+    /// Invoked when the user asks to restore from the overlay itself (`esc`, or a
+    /// click in the degraded mode).
+    public var onDismissRequest: (() -> Void)?
+
+    /// - Parameters:
+    ///   - keyboardDismissable: take key focus so `esc` works without an event
+    ///     tap. Costs the frontmost window its key status for the duration, which
+    ///     is free whenever input is being blocked anyway.
+    ///   - clickDismissable: also restore on a click. For when the hotkey is
+    ///     unavailable entirely.
+    public func activate(animated: Bool,
+                         hint: String?,
+                         keyboardDismissable: Bool,
+                         clickDismissable: Bool) {
         generation += 1
         let gen = generation
         isActive = true
@@ -95,8 +108,17 @@ public final class OverlayManager {
 
         for window in windows.values {
             window.hideHintImmediately()
+            window.acceptsKeys = keyboardDismissable
+            window.dismissOnClick = clickDismissable
+            window.onDismissRequest = { [weak self] in self?.onDismissRequest?() }
             if !animated { window.alphaValue = 1 }
             window.orderFrontRegardless()
+        }
+
+        // Only one window can hold key focus; give it to the screen the user is
+        // looking at, which is also where the hint appears.
+        if keyboardDismissable, let target = windowUnderMouse() ?? windows.values.first {
+            target.makeKeyAndOrderFront(nil)
         }
 
         if animated {
@@ -124,7 +146,13 @@ public final class OverlayManager {
         let gen = generation
         isActive = false
 
-        for window in windows.values { window.hideHintImmediately() }
+        for window in windows.values {
+            window.hideHintImmediately()
+            // Drop key focus straight away so it returns to whatever had it.
+            window.acceptsKeys = false
+            window.dismissOnClick = false
+            if window.isKeyWindow { window.resignKey() }
+        }
 
         guard animated else {
             for window in windows.values {

@@ -27,7 +27,7 @@ macOS 13+ · Apple Silicon & Intel · 菜单栏常驻 · MIT
 
 再双击一次：一切回到原样，**每块屏各自恢复到它原本的亮度**。
 
-出不来怎么办？三条独立退路：再双击一次 / 按 `esc` / 杀进程（遮罩随进程消失，亮度下次启动自动复原）。
+出不来怎么办？退路按**依赖**分层，不是按数量堆：再双击一次 / 按 `esc` / 手势不可用时遮罩自己接管键盘和鼠标（纯 AppKit，不依赖任何权限）/ 杀进程（遮罩随进程消失，亮度下次启动自动复原）。
 
 ## 安装
 
@@ -55,6 +55,7 @@ make self-test    # 全屏黑 1.2 秒，自动恢复，并校验每块屏亮度�
 | --- | --- |
 | 双击右 Control | 全部屏幕变黑 / 恢复 |
 | `esc` | 恢复（安全退路，永远不依赖手势判定准不准） |
+| 未授权时点一下屏幕 | 恢复（此时遮罩自己接管键鼠，不依赖权限） |
 | 菜单栏图标 | 线稿 = 屏幕可见，实心 = 已黑屏 |
 | 菜单 ▸ Black Out Now | 不用手势也能黑屏（未授权时的备用路径） |
 
@@ -77,9 +78,9 @@ make self-test    # 全屏黑 1.2 秒，自动恢复，并校验每块屏亮度�
 
 ## 已知限制
 
-1. **黑屏时看不到自己的菜单栏** —— 遮罩在 `CGShieldingWindowLevel()`，这是挡住通知横幅必须付的代价（一条微信预览浮在最上面就等于全泄露）。所以退出靠手势或 `esc`。
+1. **黑屏时看不到自己的菜单栏** —— 遮罩在 `CGShieldingWindowLevel()`，这是挡住通知横幅必须付的代价（一条微信预览浮在最上面就等于全泄露）。所以菜单里的 Restore 在黑屏时点不到，退出走上面那几条路。
 2. **外接显示器背光不变** —— DDC/CI 调外接屏需要按厂商 hack、单次写入几十到几百毫秒、还可能挂住 I2C 总线，收益只是「背光更暗」。遮罩已经保证看不见，不值得。实测本机两台 DELL P3225QE 不响应亮度 API，内置 XDR 正常。
-3. **密码框获得焦点时手势失效** —— macOS 的 Secure Event Input 会禁用所有事件 tap。菜单里会实时提示 `⚠︎ Hotkey paused by secure input`。
+3. **密码框获得焦点时手势失效** —— macOS 的 Secure Event Input 会禁用所有事件 tap。菜单里会实时提示 `⚠︎ Hotkey paused by secure input`；这种情况下遮罩会自动接管键盘，`esc` 仍然管用。
 4. **Blackout 不是安全边界** —— 它是隐私遮挡工具。不阻止已在进行的远程控制，也不做鉴权。真要防人动你的机器，请锁屏。
 5. **重新构建后可能要重新授权** —— macOS 按代码签名识别 App，ad-hoc 签名每次构建都变。`tccutil reset Accessibility com.huangxuankun.blackout` 可以重置。
 
@@ -140,7 +141,7 @@ A menu-bar utility for the moment someone walks up to your desk while an agent i
 
 Double-tap Right Control and every display goes fully black — above the menu bar, the Dock and notification banners. Your Mac is not locked and nothing loses focus, so long-running work continues. Keyboard and mouse are swallowed while hidden, an idle-sleep assertion keeps the machine awake, and backlights drop to minimum on displays that support it. Double-tap again and every display returns to its own previous brightness.
 
-Three independent ways out: the gesture, `esc`, or killing the process (overlays die with it; brightness is restored on the next launch from a record written before dimming).
+Ways out are grouped by *dependency*, not counted: the gesture and the tap-level `esc` both need the event tap, so when the tap is unavailable the overlay takes key focus and handles `esc` and clicks itself through plain AppKit — no permission involved. Killing the process always works too (overlays die with it; brightness is restored on the next launch from a record written before dimming).
 
 ### Install
 
