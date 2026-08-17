@@ -45,19 +45,25 @@ echo ""
 
 if [ "$REPLACING_EXISTING" = true ]; then
     cat <<EOF
-┌──────────────────────────────────────────────────────────────────────────┐
-│  ⚠︎  RE-APPROVE ACCESSIBILITY                                            │
-│                                                                          │
-│  This replaced an existing install, so its ad-hoc signature changed and   │
-│  the old Accessibility grant no longer applies. The checkbox may still    │
-│  look ticked while the hotkey is dead.                                    │
-│                                                                          │
-│  System Settings ▸ Privacy & Security ▸ Accessibility                     │
-│    → toggle $APP_NAME OFF, then ON again                                  │
-│                                                                          │
-│  Or reset it and approve fresh:                                          │
-│    tccutil reset Accessibility $BUNDLE_ID
-└──────────────────────────────────────────────────────────────────────────┘
+  ⚠︎  RE-APPROVE ACCESSIBILITY
+
+  This replaced an existing install, so the ad-hoc signature changed and the
+  old grant no longer matches. The checkbox keeps looking ticked while the
+  hotkey is dead, which reads as a bug in the app.
+
+  Toggling the checkbox off and on does NOT reliably refresh it — the stale
+  record stays pinned to the previous binary. Clear it, then approve fresh:
+
+    tccutil reset Accessibility $BUNDLE_ID
+
+  then open the pane and tick $APP_NAME:
+
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
+  No restart needed — $APP_NAME picks it up within a couple of seconds.
+
+  To stop this happening on every install, sign with a stable identity:
+    CODESIGN_IDENTITY="Your Identity" make install     (see README)
 EOF
 else
     cat <<EOF

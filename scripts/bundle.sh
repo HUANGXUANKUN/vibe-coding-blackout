@@ -61,10 +61,20 @@ else
     echo "    skipped (icon generation unavailable here)"
 fi
 
-# Ad-hoc signature. TCC identifies the app by its signature, so this has to
-# exist or Accessibility approval will not stick at all.
-echo "==> Signing (ad-hoc)"
-codesign --force --sign - --identifier "$BUNDLE_ID" --timestamp=none "$APP" >/dev/null 2>&1 \
+# TCC identifies the app by its signature, so this has to exist or Accessibility
+# approval will not stick at all.
+#
+# The default is ad-hoc, which pins the grant to the binary's cdhash: every
+# rebuild silently invalidates it. Set CODESIGN_IDENTITY to a stable identity
+# (self-signed or Developer ID) and the grant survives rebuilds instead —
+# see "Known limits" in the README.
+IDENTITY="${CODESIGN_IDENTITY:--}"
+if [ "$IDENTITY" = "-" ]; then
+    echo "==> Signing (ad-hoc)"
+else
+    echo "==> Signing as: $IDENTITY"
+fi
+codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" --timestamp=none "$APP" >/dev/null 2>&1 \
     || { echo "    codesign failed"; exit 1; }
 codesign --verify --deep --strict "$APP" && echo "    signature verified"
 
