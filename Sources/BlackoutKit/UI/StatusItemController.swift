@@ -15,7 +15,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     public var onShowOnboarding: (() -> Void)?
     public var onQuit: (() -> Void)?
 
-    private static let repositoryURL = URL(string: "https://github.com/HUANGXUANKUN/blackout")!
+    private static let repositoryURL = URL(string: "https://github.com/HUANGXUANKUN/vibe-coding-blackout")!
 
     public init(controller: BlackoutController, monitor: EventTapMonitor, prefs: Preferences = .shared) {
         self.controller = controller

@@ -32,7 +32,7 @@ macOS 13+ · Apple Silicon & Intel · 菜单栏常驻 · MIT
 ## 安装
 
 ```bash
-git clone https://github.com/HUANGXUANKUN/blackout.git && cd blackout && make install
+git clone https://github.com/HUANGXUANKUN/vibe-coding-blackout.git && cd vibe-coding-blackout && make install
 ```
 
 只需要 Xcode Command Line Tools（`xcode-select --install`），**不需要装 Xcode**。
@@ -152,7 +152,7 @@ Ways out are grouped by *dependency*, not counted: the gesture and the tap-level
 ### Install
 
 ```bash
-git clone https://github.com/HUANGXUANKUN/blackout.git && cd blackout && make install
+git clone https://github.com/HUANGXUANKUN/vibe-coding-blackout.git && cd vibe-coding-blackout && make install
 ```
 
 Needs only the Xcode Command Line Tools. Then grant **System Settings ▸ Privacy & Security ▸ Accessibility ▸ Blackout** — required for the keyboard gesture. Without it you can still black out from the menu.
