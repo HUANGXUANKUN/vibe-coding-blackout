@@ -82,7 +82,13 @@ make self-test    # 全屏黑 1.2 秒，自动恢复，并校验每块屏亮度�
 2. **外接显示器背光不变** —— DDC/CI 调外接屏需要按厂商 hack、单次写入几十到几百毫秒、还可能挂住 I2C 总线，收益只是「背光更暗」。遮罩已经保证看不见，不值得。实测本机两台 DELL P3225QE 不响应亮度 API，内置 XDR 正常。
 3. **密码框获得焦点时手势失效** —— macOS 的 Secure Event Input 会禁用所有事件 tap。菜单里会实时提示 `⚠︎ Hotkey paused by secure input`；这种情况下遮罩会自动接管键盘，`esc` 仍然管用。
 4. **Blackout 不是安全边界** —— 它是隐私遮挡工具。不阻止已在进行的远程控制，也不做鉴权。真要防人动你的机器，请锁屏。
-5. **重新构建后可能要重新授权** —— macOS 按代码签名识别 App，ad-hoc 签名每次构建都变。`tccutil reset Accessibility com.huangxuankun.blackout` 可以重置。
+5. **每次 `make install` 之后必须重新授权** —— macOS 的 TCC 按代码签名认 App，而 ad-hoc 签名的 cdhash 随二进制内容变。重装后**复选框看着还是勾上的，但手势已经死了** —— 这是最容易被误当成 App bug 的现象。修法：在辅助功能列表里把 Blackout 关掉再打开；或者
+
+   ```bash
+   tccutil reset Accessibility com.huangxuankun.blackout
+   ```
+
+   然后重新勾一次。想彻底免除这个来回，只能用一个固定的签名身份（自签名证书或 Developer ID）替代 ad-hoc 签名 —— 那需要往钥匙串里装证书并设置信任，不在本仓库的默认流程里。
 
 ## 架构
 
