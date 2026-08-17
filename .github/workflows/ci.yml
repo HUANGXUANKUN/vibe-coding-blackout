@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Test
+        run: ./.build/release/blackout-tests
+
+      # Bundling draws the icon offscreen and ad-hoc signs the app. It does not
+      # need a window server, but it does need codesign to work on the runner.
+      - name: Bundle
+        run: ./scripts/bundle.sh
+
+      - name: Verify bundle
+        run: |
+          plutil -lint dist/Blackout.app/Contents/Info.plist
+          test -f dist/Blackout.app/Contents/MacOS/Blackout
+          codesign --verify --deep --strict dist/Blackout.app
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' dist/Blackout.app/Contents/Info.plist)" = "true" ]
+
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Blackout.app
+          path: dist/Blackout.app
