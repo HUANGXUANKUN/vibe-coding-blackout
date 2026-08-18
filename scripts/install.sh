@@ -36,6 +36,11 @@ echo "==> Installing to $TARGET"
 rm -rf "$TARGET"
 cp -R "$ROOT/dist/$APP_NAME.app" "$TARGET"
 
+# Leave no second copy behind: a stray dist/Blackout.app is the same build with
+# the same signature, so double-clicking it in Finder silently starts a rival
+# instance that fights this one over the displays.
+rm -rf "$ROOT/dist"
+
 echo "==> Launching"
 open "$TARGET"
 

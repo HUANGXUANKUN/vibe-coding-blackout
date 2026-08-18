@@ -27,8 +27,27 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
-        statusItem.behavior = .terminationOnRemoval
+
+        // An empty behaviour set means the item cannot be dragged out of the menu
+        // bar at all. This is a panic button: it has to be where you look for it,
+        // every time. (.terminationOnRemoval, used before, leaves removal on the
+        // table and quits the app when it happens — the opposite of what a
+        // permanent indicator wants.)
+        statusItem.behavior = []
+        // Defensive: overrides a visibility flag persisted as false by an earlier
+        // run or a menu-bar manager.
+        statusItem.isVisible = true
+
         refresh()
+
+        // The one failure this app cannot report through its own UI is "the icon
+        // never appeared", so say it in the log instead.
+        Log.app.notice("""
+            Status item: button=\(self.statusItem.button != nil) \
+            visible=\(self.statusItem.isVisible) \
+            length=\(self.statusItem.length) \
+            thickness=\(NSStatusBar.system.thickness)
+            """)
     }
 
     /// Mirrors `BlackoutController.isActive` into the menu-bar mark.

@@ -18,8 +18,30 @@ public final class BlackoutAppDelegate: NSObject, NSApplicationDelegate {
         Self.liveDelegate = self
     }
 
+    /// Posted by a second instance just before it exits, so the one that is
+    /// already running can show itself instead of the launch appearing to do
+    /// nothing.
+    static let showOnboardingNotification = Notification.Name("com.huangxuankun.blackout.showOnboarding")
+
     public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        // One Blackout at a time. Two instances means two event taps both firing
+        // on the same double-tap, two sets of overlays, and two brightness
+        // controllers writing the same display — they race, and a restore can
+        // land before the other one's dim. Easy to hit by accident, because
+        // dist/Blackout.app and /Applications/Blackout.app are the same build
+        // with the same signature.
+        if let bundleID = Bundle.main.bundleIdentifier,
+           let existing = NSRunningApplication
+               .runningApplications(withBundleIdentifier: bundleID)
+               .first(where: { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }) {
+            Log.app.notice("Another Blackout is running (pid \(existing.processIdentifier)); exiting")
+            DistributedNotificationCenter.default().postNotificationName(
+                Self.showOnboardingNotification, object: nil, userInfo: nil, deliverImmediately: true)
+            NSApp.terminate(nil)
+            return
+        }
 
         // Before anything else touches the displays: undo a dim that a crashed or
         // force-quit run left behind (PRD 6.4 / F8).
@@ -56,6 +78,13 @@ public final class BlackoutAppDelegate: NSObject, NSApplicationDelegate {
 
         installTerminationHandlers()
 
+        // A second launch attempt asks this instance to surface itself.
+        DistributedNotificationCenter.default().addObserver(
+            forName: Self.showOnboardingNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.showOnboarding()
+        }
+
         if !prefs.didOnboard {
             showOnboarding()
         } else if !monitor.hasAccessibilityAccess {
@@ -75,6 +104,14 @@ public final class BlackoutAppDelegate: NSObject, NSApplicationDelegate {
 
     public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    public func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool
+    ) -> Bool {
+        showOnboarding()
+        return true
     }
 
     // MARK: - Onboarding
