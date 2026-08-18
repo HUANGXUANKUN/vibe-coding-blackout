@@ -48,6 +48,17 @@ public final class OnboardingWindowController: NSWindowController {
         gesture.alignment = .center
         gesture.textColor = .secondaryLabelColor
 
+        // Built-in MacBook keyboards have no right-hand Control key at all, so the
+        // default trigger is unreachable there and the app looks broken. Say so
+        // rather than letting people conclude it does not work.
+        let keyboardNote = label(
+            "No such key on your keyboard? Built-in MacBook keyboards have no right-hand\n"
+            + "Control — pick a different trigger from the menu bar icon ▸ Trigger.",
+            size: 11, weight: .regular
+        )
+        keyboardNote.alignment = .center
+        keyboardNote.textColor = .tertiaryLabelColor
+
         let body = label(
             """
             All of your displays go completely black while your Mac keeps \
@@ -81,14 +92,15 @@ public final class OnboardingWindowController: NSWindowController {
         buttons.orientation = .horizontal
         buttons.spacing = 10
 
-        let stack = NSStackView(views: [hero, title, gesture, body, statusLabel, grantButton, buttons])
+        let stack = NSStackView(views: [hero, title, gesture, keyboardNote, body, statusLabel, grantButton, buttons])
         stack.orientation = .vertical
         stack.alignment = .centerX
         stack.spacing = 12
         stack.edgeInsets = NSEdgeInsets(top: 28, left: 36, bottom: 26, right: 36)
         stack.setCustomSpacing(18, after: hero)
         stack.setCustomSpacing(4, after: title)
-        stack.setCustomSpacing(20, after: gesture)
+        stack.setCustomSpacing(6, after: gesture)
+        stack.setCustomSpacing(20, after: keyboardNote)
         stack.setCustomSpacing(20, after: body)
         stack.setCustomSpacing(14, after: grantButton)
 

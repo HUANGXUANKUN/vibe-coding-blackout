@@ -79,10 +79,11 @@ make self-test    # 全屏黑 1.2 秒，自动恢复，并校验每块屏亮度�
 ## 已知限制
 
 1. **黑屏时看不到自己的菜单栏** —— 遮罩在 `CGShieldingWindowLevel()`，这是挡住通知横幅必须付的代价（一条微信预览浮在最上面就等于全泄露）。所以菜单里的 Restore 在黑屏时点不到，退出走上面那几条路。
-2. **外接显示器背光不变** —— DDC/CI 调外接屏需要按厂商 hack、单次写入几十到几百毫秒、还可能挂住 I2C 总线，收益只是「背光更暗」。遮罩已经保证看不见，不值得。实测本机两台 DELL P3225QE 不响应亮度 API，内置 XDR 正常。
-3. **密码框获得焦点时手势失效** —— macOS 的 Secure Event Input 会禁用所有事件 tap。菜单里会实时提示 `⚠︎ Hotkey paused by secure input`；这种情况下遮罩会自动接管键盘，`esc` 仍然管用。
-4. **Blackout 不是安全边界** —— 它是隐私遮挡工具。不阻止已在进行的远程控制，也不做鉴权。真要防人动你的机器，请锁屏。
-5. **每次 `make install` 之后必须重新授权** —— macOS 的 TCC 按代码签名认 App，ad-hoc 签名的 cdhash 随二进制内容变，那条授权记录就钉死在旧二进制上了。重装后**复选框看着还是勾上的，但手势已经死了** —— 最容易被误当成 App bug 的现象。
+2. **MacBook 内置键盘没有右 Control 键** —— 底排只有 `fn control option command 空格 command option`，Control 只有左边一个。只用笔记本键盘的话，默认触发键按不出来，要在菜单 ▸ Trigger 里换成 **Left Control** 或 **Right Command**。接外接键盘（多数全尺寸键盘有右 Control）则不受影响。
+3. **外接显示器背光不变** —— DDC/CI 调外接屏需要按厂商 hack、单次写入几十到几百毫秒、还可能挂住 I2C 总线，收益只是「背光更暗」。遮罩已经保证看不见，不值得。实测本机两台 DELL P3225QE 不响应亮度 API，内置 XDR 正常。
+4. **密码框获得焦点时手势失效** —— macOS 的 Secure Event Input 会禁用所有事件 tap。菜单里会实时提示 `⚠︎ Hotkey paused by secure input`；这种情况下遮罩会自动接管键盘，`esc` 仍然管用。
+5. **Blackout 不是安全边界** —— 它是隐私遮挡工具。不阻止已在进行的远程控制，也不做鉴权。真要防人动你的机器，请锁屏。
+6. **每次 `make install` 之后必须重新授权** —— macOS 的 TCC 按代码签名认 App，ad-hoc 签名的 cdhash 随二进制内容变，那条授权记录就钉死在旧二进制上了。重装后**复选框看着还是勾上的，但手势已经死了** —— 最容易被误当成 App bug 的现象。
 
    **注意：在开关里点「关再开」并不能刷新它**（实测无效，记录仍指向旧 cdhash）。要清掉重来：
 
